@@ -1,7 +1,3 @@
-#TODO вызов команды - проверка на админа - ожидание текста - принял текст - спросить нужно ли фото - если нужно, ждать фото -
-#TODO принять фото - показать как будет выглядеть - подтверждение рассылки - рассылка
-
-
 from set.dispatcher import my_disp
 from aiogram import types
 from configs.config import db_name
