@@ -1,17 +1,14 @@
 from set.dispatcher import my_disp
 from aiogram import types
-from configs.config import db_name
-import sqlite3 as sq
 from configs.config import ADMIN
 from states.my_states import MyStatesGroup
-from database.get_status import is_admin
 from aiogram.dispatcher import FSMContext
 from keyboards.confirm_ikb import confirm_ikb
 from keyboards.choose_photo import choose_photo_ikb
 from set.bot import my_bot
-from operations.add_sending_with_photo import sending_with_photo
-from operations.add_sending_withot_photo import sending_without_photo
-
+from operations.ads_sending_with_photo import sending_with_photo
+from operations.ads_sending_withot_photo import sending_without_photo
+from database.db_class import Database
 
 NOT_ADMIN = "Рассылку может запустить только администратор. Вы не администратор!"
 INSTRUCTION = "Теперь пришлите текст рассылки"
@@ -22,7 +19,7 @@ CONFIRM_INSTRUCTION = "Для продолжения подтвердите св
 @my_disp.message_handler(commands=["send"],
                          state="*")
 async def cmd_send(message: types.Message):
-    if ADMIN == message.from_user.id or is_admin(user_id=message.from_user.id):
+    if ADMIN == message.from_user.id or Database.is_admin(user_id=message.from_user.id):
         await message.reply(text=INSTRUCTION)
         await MyStatesGroup.wait_text_to_send.set()
     else:
@@ -30,6 +27,7 @@ async def cmd_send(message: types.Message):
 
 
 @my_disp.message_handler(lambda message: message.text,
+                         lambda message: not message.text.startswith("/"),
                          state=MyStatesGroup.wait_text_to_send)
 async def get_text(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
