@@ -29,7 +29,8 @@ async def noun_chang_state(message: types.Message, state: FSMContext):
         await message.reply("Теперь отправь мне любое существительное на немецком языке  🇩🇪")
 
 
-@my_disp.message_handler(state=MyStatesGroup.verb)
+@my_disp.message_handler(lambda message: not message.text.startswith("/"),
+                         state=MyStatesGroup.verb)
 async def verb_answer(message: types.Message, state: FSMContext) -> None:
     wort = message.text.lower()
     for letter, umlaut in LETTERS_PARS.items():
@@ -54,7 +55,8 @@ async def verb_answer(message: types.Message, state: FSMContext) -> None:
         await message.reply(text="Такой глагол не найден  👮‍♂️")
 
 
-@my_disp.message_handler(state=MyStatesGroup.noun)
+@my_disp.message_handler(lambda message: not message.text.startswith("/"),
+                         state=MyStatesGroup.noun)
 async def noun_answer(message: types.Message) -> None:
     wort = message.text.capitalize()
     for letter, umlaut in LETTERS_PARS.items():
