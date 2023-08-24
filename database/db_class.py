@@ -1,7 +1,5 @@
 import sqlite3 as sq
 
-import configs.config
-
 
 class Database:
     NOW_ADMIN = "Этот пользователь уже является администратором!"
@@ -12,106 +10,106 @@ class Database:
     SUCCESS_ADD = "Задание выполнено: пользователь назначен администратором!"
     NOT_USER = "Такой пользователь не найден. Сначала он должен запустить бота!"
 
-    @classmethod
-    def create_table(cls, db_name: str) -> None:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
+    @staticmethod
+    def create_table(conn: sq.Connection) -> None:
+        cur = conn.cursor()
+        # cur.execute("""DROP TABLE IF EXISTS users""")
 
-            # cur.execute("""DROP TABLE IF EXISTS users""")
-
-            cur.execute("""CREATE TABLE IF NOT EXISTS users(
-                                user_id INTEGER,
-                                admin INTEGER,
-                                activ INTEGER,
-                                last_active_date TEXT)""")
-
-    @classmethod
-    def new_user_create(cls, user_id: int, date: str, db_name: str) -> None:
-        if not cls.is_user(user_id=user_id, db_name=db_name):
-            with sq.connect(db_name) as con:
-                cur = con.cursor()
-                cur.execute("""INSERT INTO users VALUES(?, ?, ?, ?)""", (user_id, 0, 1, date,))
+        cur.execute("""CREATE TABLE IF NOT EXISTS users(
+                            user_id INTEGER,
+                            admin INTEGER,
+                            activ INTEGER,
+                            last_active_date TEXT)""")
+        conn.commit()
 
     @classmethod
-    def add_admin(cls, db_name: str, date: str, user_id: int, super_admin: bool = False) -> str:
-        if not cls.is_user(user_id=user_id, db_name=db_name):
+    def new_user_create(cls, user_id: int, date: str, conn: sq.Connection) -> None:
+        cur = conn.cursor()
+
+        if not cls.is_user(user_id=user_id, conn=conn):
+            cur.execute("""INSERT INTO users VALUES(?, ?, ?, ?)""", (user_id, 0, 1, date,))
+            conn.commit()
+
+    @classmethod
+    def add_admin(cls, conn: sq.Connection, date: str, user_id: int, super_admin: bool = False) -> str:
+        cur = conn.cursor()
+
+        if not cls.is_user(user_id=user_id, conn=conn):
             return cls.NOT_USER
-        elif cls.is_admin(user_id=user_id, db_name=db_name):
+        elif cls.is_admin(user_id=user_id, conn=conn):
             return cls.NOW_ADMIN
 
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
-
-            if super_admin:
-                # добавление суперадмина в БД при мервом запуске кода
-                cur.execute("""INSERT INTO users VALUES(?, 1, 1, ?)""", (user_id, date,))
-                return cls.SUPER_ADMIN_SUCCESS
-            else:
-                # добавление обычного администратора
-                cur.execute("""UPDATE users SET admin = 1, activ = 1, last_active_date = ? WHERE user_id LIKE(?)""",
-                            (date, user_id,))
-                return cls.SUCCESS_ADD
+        if super_admin:
+            # добавление суперадмина в БД при мервом запуске кода
+            cur.execute("""INSERT INTO users VALUES(?, 1, 1, ?)""", (user_id, date,))
+            conn.commit()
+            return cls.SUPER_ADMIN_SUCCESS
+        else:
+            # добавление обычного администратора
+            cur.execute("""UPDATE users SET admin = 1, activ = 1, last_active_date = ? WHERE user_id LIKE(?)""",
+                        (date, user_id,))
+            conn.commit()
+            return cls.SUCCESS_ADD
 
     @classmethod
-    def delete_admin(cls, user_id: int, db_name: str) -> str:
-        if not cls.is_user(user_id=user_id, db_name=db_name):
+    def delete_admin(cls, user_id: int, conn: sq.Connection) -> str:
+        if not cls.is_user(user_id=user_id, conn=conn):
             return cls.NOT_USER
-        if not cls.is_admin(user_id=user_id, db_name=db_name):
+        if not cls.is_admin(user_id=user_id, conn=conn):
             return cls.NOT_ADMIN
 
-        cls.delete_process(user_id=user_id, db_name=configs.config.db_name)
+        cls.delete_process(conn=conn, user_id=user_id)
         return cls.SUCCESS_DEL
 
-    @classmethod
-    def delete_process(cls, user_id: int, db_name: str):
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
-            cur.execute("""UPDATE users SET admin = 0 WHERE user_id LIKE(?)""", (user_id,))
+    @staticmethod
+    def delete_process(user_id: int, conn: sq.Connection):
+        cur = conn.cursor()
 
-    @classmethod
-    def is_user(cls, user_id: int, db_name: str) -> bool:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
+        cur.execute("""UPDATE users SET admin = 0 WHERE user_id LIKE(?)""", (user_id,))
+        conn.commit()
 
-            res = cur.execute("""SELECT activ FROM users WHERE user_id LIKE(?)""", (user_id,))
-            if res.fetchone():
-                return True
-            else:
-                return False
+    @staticmethod
+    def is_user(user_id: int, conn: sq.Connection) -> bool:
+        cur = conn.cursor()
 
-    @classmethod
-    def is_admin(cls, user_id: int, db_name: str) -> bool:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
+        res = cur.execute("""SELECT activ FROM users WHERE user_id LIKE(?)""", (user_id,))
+        if res.fetchone():
+            return True
+        else:
+            return False
 
-            res = cur.execute("""SELECT admin FROM users WHERE user_id LIKE(?)""", (user_id,)).fetchone()
+    @staticmethod
+    def is_admin(user_id: int, conn: sq.Connection) -> bool:
+        cur = conn.cursor()
 
-            if res and res[0] == 1:
-                return True
-            else:
-                return False
+        res = cur.execute("""SELECT admin FROM users WHERE user_id LIKE(?)""", (user_id,)).fetchone()
 
-    @classmethod
-    def get_users(cls, db_name: str, regim: str = "all") -> list:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
+        if res and res[0] == 1:
+            return True
+        else:
+            return False
 
-            if regim == "all":
-                ids_list = cur.execute("""SELECT user_id FROM users""").fetchall()
-                return ids_list
-            if regim == "activ":
-                ids_list = cur.execute("""SELECT user_id FROM users WHERE activ == 1""").fetchall()
-                return ids_list
+    @staticmethod
+    def get_users(conn: sq.Connection, regim: str = "all") -> list:
+        cur = conn.cursor()
 
-    @classmethod
-    def update_activ_date(cls, user_id: int, date: str, db_name: str) -> None:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
-            cur.execute("UPDATE users SET activ = 1, last_active_date = ? WHERE user_id = ?", (date, user_id))
+        if regim == "activ":
+            ids_list = cur.execute("""SELECT user_id FROM users WHERE activ == 1""").fetchall()
+        else:
+            ids_list = cur.execute("""SELECT user_id FROM users""").fetchall()
 
-    @classmethod
-    def update_activ_status(cls, user_id: int, db_name: str) -> None:
-        with sq.connect(db_name) as con:
-            cur = con.cursor()
+        return ids_list
 
-            cur.execute("""UPDATE users SET activ = 0 WHERE user_id LIKE(?)""", (user_id, ))
+    @staticmethod
+    def update_activ_date(user_id: int, date: str, conn: sq.Connection) -> None:
+        cur = conn.cursor()
+
+        cur.execute("UPDATE users SET activ = 1, last_active_date = ? WHERE user_id = ?", (date, user_id))
+        conn.commit()
+
+    @staticmethod
+    def update_activ_status(user_id: int, conn: sq.Connection) -> None:
+        cur = conn.cursor()
+
+        cur.execute("""UPDATE users SET activ = 0 WHERE user_id LIKE(?)""", (user_id, ))
+        conn.commit()

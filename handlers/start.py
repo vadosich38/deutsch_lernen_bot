@@ -1,7 +1,7 @@
 from set.dispatcher import my_disp
 from aiogram import types
 from keyboards.kb import regular_kb
-from configs.config import START_TEXT, db_name
+from configs.config import START_TEXT, db_connection
 from datetime import datetime
 from database.db_class import Database
 
@@ -13,5 +13,4 @@ async def cmd_start(message: types.Message) -> None:
                          reply_markup=regular_kb())
     Database.new_user_create(user_id=message.from_user.id,
                              date=str(datetime.now()),
-                             db_name=db_name)
-
+                             conn=db_connection)

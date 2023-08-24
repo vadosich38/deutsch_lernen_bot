@@ -1,6 +1,7 @@
 from set.dispatcher import my_disp
 from aiogram import types
 from configs.config import ADMIN
+from configs.config import db_connection
 from states.my_states import MyStatesGroup
 from aiogram.dispatcher import FSMContext
 from keyboards.confirm_ikb import confirm_ikb
@@ -19,7 +20,7 @@ CONFIRM_INSTRUCTION = "Для продолжения подтвердите св
 @my_disp.message_handler(commands=["send"],
                          state="*")
 async def cmd_send(message: types.Message):
-    if ADMIN == message.from_user.id or Database.is_admin(user_id=message.from_user.id):
+    if ADMIN == message.from_user.id or Database.is_admin(user_id=message.from_user.id, conn=db_connection):
         await message.reply(text=INSTRUCTION)
         await MyStatesGroup.wait_text_to_send.set()
     else:
@@ -125,4 +126,3 @@ async def cmd_cancel_confirm_photo(message: types.Message, state: FSMContext):
 async def cmd_cancel_choose(message: types.Message, state: FSMContext):
     await message.reply(text="Вы отменили рассылку!")
     await state.finish()
-

@@ -6,7 +6,4 @@ from .cmd_send import *
 from .cmd_add_admin import *
 from .cmd_delete_admin import *
 
-
-
-
 print("INIT handlers")
