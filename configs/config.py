@@ -1,3 +1,6 @@
+from database.connection_fabrica import get_connection
+
+
 API_KEY = "6126620863:AAG8OxQQhtNnT0tsDoEMg6yDY1R8NcgenwI"
 NOUN_LINK = "https://www.verbformen.de/deklination/substantive/"
 VERB_LINK = "https://www.verbformen.de/konjugation/steckbrief/"
@@ -10,3 +13,4 @@ START_TEXT = "Добро пожаловать!  🥳\nЭто не простой
              "После выбора отправьте мне любое существительное или глагол на немецком языке  🇩🇪"
 ADMIN = 423997885
 db_name = "my_db.db"
+db_connection = get_connection(my_db_name=db_name)

@@ -1,5 +1,9 @@
 from aiogram import executor
 from set.dispatcher import my_disp
+from database.db_class import Database
+from configs.config import db_connection
+from configs.config import ADMIN
+from datetime import datetime
 
 from handlers.start import cmd_start
 from handlers.regims import noun_chang_state, verb_chang_state
@@ -17,24 +21,25 @@ from handlers.regims import noun_answer
 from handlers.regims import verb_answer
 
 
-from database.db_class import Database
-from configs.config import ADMIN, db_name
-from datetime import datetime
-
-
 async def on_startup(_):
-    Database.create_table(db_name=db_name)
+    Database.create_table(conn=db_connection)
     print("База данных успешно создана")
 
     print(Database.add_admin(
-        db_name=db_name,
         date=str(datetime.now()),
         user_id=ADMIN,
-        super_admin=True))
+        super_admin=True,
+        conn=db_connection))
     print("Бот успешно запущен")
 
 
 if __name__ == "__main__":
-    executor.start_polling(dispatcher=my_disp,
-                           on_startup=on_startup,
-                           skip_updates=True)
+    try:
+        executor.start_polling(dispatcher=my_disp,
+                               on_startup=on_startup,
+                               skip_updates=True)
+    except Exception as error_name:
+        print("Возникла ошибка:", error_name)
+    finally:
+        db_connection.commit()
+        db_connection.close()
