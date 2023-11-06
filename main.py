@@ -20,6 +20,8 @@ from handlers.cmd_send import confirm_with_photo
 from handlers.regims import noun_answer
 from handlers.regims import verb_answer
 
+from set.bot import my_bot
+
 
 async def on_startup(_):
     Database.create_table(conn=db_connection)
@@ -30,6 +32,10 @@ async def on_startup(_):
         user_id=ADMIN,
         super_admin=True,
         conn=db_connection))
+
+    updates = ['message', 'callback_query']
+    await my_bot.get_updates(allowed_updates=updates)
+
     print("Бот успешно запущен")
 
 
